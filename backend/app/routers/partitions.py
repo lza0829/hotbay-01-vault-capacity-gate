@@ -30,6 +30,11 @@ def list_parts():
     return svc.list_partitions()
 
 
+@router.get("/登记审计")
+def register_audits():
+    return svc.list_register_audits()
+
+
 @router.get("/分区/{pid}/素材段")
 def list_clips(pid: int):
     with db() as conn:

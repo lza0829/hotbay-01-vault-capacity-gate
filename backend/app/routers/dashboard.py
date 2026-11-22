@@ -1,6 +1,7 @@
 from __future__ import annotations
 from fastapi import APIRouter
 from app.db import db
+from app.services.core import tier_occupied_counts, vault_partition_count
 
 router = APIRouter(tags=["总览"])
 
@@ -11,10 +12,16 @@ def overview():
         def cnt(sql, *a):
             return conn.execute(sql, a).fetchone()["c"]
 
+        # 热温冷在册徽章：与登记写入侧同一占用谓词聚合
+        tiers = tier_occupied_counts(conn)
+        vaults = []
+        for v in conn.execute("SELECT id, name, capacity, active FROM vaults ORDER BY id").fetchall():
+            d = dict(v)
+            d["在册"] = vault_partition_count(conn, v["id"])
+            d["是否满容"] = d["在册"] >= v["capacity"]
+            vaults.append(d)
         return {
-            "热档": cnt("SELECT COUNT(*) AS c FROM partitions WHERE tier='热档' AND status='在册'"),
-            "温档": cnt("SELECT COUNT(*) AS c FROM partitions WHERE tier='温档' AND status='在册'"),
-            "冷档": cnt("SELECT COUNT(*) AS c FROM partitions WHERE tier='冷档' AND status='在册'"),
+            **tiers,
             "迁移执行中": cnt("SELECT COUNT(*) AS c FROM migrate_jobs WHERE status='执行中'"),
             "待销毁候选": cnt("SELECT COUNT(*) AS c FROM partitions WHERE status='已过期'"),
             "已销毁": cnt("SELECT COUNT(*) AS c FROM partitions WHERE status='已销毁'"),
@@ -22,5 +29,5 @@ def overview():
             "最近互证": (
                 lambda r: dict(r) if r else None
             )(conn.execute("SELECT status, drift_count, created_at FROM verify_runs ORDER BY id DESC LIMIT 1").fetchone()),
-            "片库间": [dict(x) for x in conn.execute("SELECT id, name, capacity, active FROM vaults ORDER BY id").fetchall()],
+            "片库间": vaults,
         }

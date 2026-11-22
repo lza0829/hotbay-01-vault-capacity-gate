@@ -27,7 +27,10 @@ export default function Home() {
         <h2>片库间</h2>
         <ul className="plain">
           {o.片库间.map(v => (
-            <li key={v.id}>{v.name} · 额定 {v.capacity} · {v.active ? '启用' : '停用'}</li>
+            <li key={v.id}>
+              {v.name} · 在册 {v.在册}/额定 {v.capacity} · {v.active ? '启用' : '停用'}
+              {v.active && v.是否满容 && <span className="pill bad">满容</span>}
+            </li>
           ))}
         </ul>
         {o.最近互证 && (

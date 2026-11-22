@@ -20,6 +20,7 @@ export const api = {
   partitions: () => req('/分区'),
   clips: (id) => req(`/分区/${id}/素材段`),
   createPartition: (body) => req('/分区', { method: 'POST', body: JSON.stringify(body) }),
+  registerAudits: () => req('/登记审计'),
   migrates: () => req('/迁移'),
   startMigrate: (body) => req('/迁移', { method: 'POST', body: JSON.stringify(body) }),
   finishMigrate: (id, success = true) => req(`/迁移/${id}/完成`, { method: 'POST', body: JSON.stringify({ success }) }),
